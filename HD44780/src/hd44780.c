@@ -9,6 +9,18 @@ void lcd44780_delay(unsigned int p)
 	for(i=0;i<(p*10);i++){}
 }
 
+void lcd44780_delay_ns(uint32_t ns)
+{
+	uint32_t delayLoops = ((SystemCoreClock/3000000) * ns) / 1000;
+	while(delayLoops != 0)
+		delayLoops--;
+}
+
+/**
+  * @brief  Write half byte in ram
+  * @param  None
+  * @retval None
+  */
 void lcd44780_WriteNibble(unsigned char data)
 {
 	GPIOB->BSRR = ((data & 0x0F)<<HD44780_OFFSET);
@@ -19,13 +31,26 @@ void lcd44780_WriteNibble(unsigned char data)
 	GPIOB->BRR = (0x0F<<HD44780_OFFSET);
 }
 
-
+/**
+  * @brief  This function :
+             - Enables GPIO clock
+             - Configures the USART1 pins on GPIO PA9 PA10
+  * @param  None
+  * @retval None
+  */
 void lcd44780_WriteByte(unsigned char data)
 {
 	lcd44780_WriteNibble(data >> 4);
 	lcd44780_WriteNibble(data & 0x0F);
 }
 
+/**
+  * @brief  This function :
+             - Enables GPIO clock
+             - Configures the USART1 pins on GPIO PA9 PA10
+  * @param  None
+  * @retval None
+  */
 void lcd44780_GoToLine(char LineNum)
 {
 	lcd44780_RS_0;
@@ -36,6 +61,13 @@ void lcd44780_GoToLine(char LineNum)
 	lcd44780_Line = LineNum;
 }
 
+/**
+  * @brief  This function :
+             - Enables GPIO clock
+             - Configures the USART1 pins on GPIO PA9 PA10
+  * @param  None
+  * @retval None
+  */
 void lcd44780_ClearLCD(void)
 {
 	lcd44780_RS_0;
@@ -45,7 +77,13 @@ void lcd44780_ClearLCD(void)
 	lcd44780_GoToLine(1);
 }
 
-
+/**
+  * @brief  This function :
+             - Enables GPIO clock
+             - Configures the USART1 pins on GPIO PA9 PA10
+  * @param  None
+  * @retval None
+  */
 void lcd44780_SetLCDPosition(char x, char y)
 {
 	lcd44780_RS_0;
@@ -55,6 +93,13 @@ void lcd44780_SetLCDPosition(char x, char y)
 	lcd44780_Line = y+1;
 }
 
+/**
+  * @brief  This function :
+             - Enables GPIO clock
+             - Configures the USART1 pins on GPIO PA9 PA10
+  * @param  None
+  * @retval None
+  */
 void lcd44780_WriteCommand(unsigned char commandToWrite){
 	
 	lcd44780_RS_0;
@@ -65,6 +110,13 @@ void lcd44780_WriteCommand(unsigned char commandToWrite){
 	
 }
 
+/**
+  * @brief  This function :
+             - Enables GPIO clock
+             - Configures the USART1 pins on GPIO PA9 PA10
+  * @param  None
+  * @retval None
+  */
 void lcd44780_ShowChar(unsigned char c)
 {
 	lcd44780_RS_1;
@@ -79,50 +131,63 @@ void lcd44780_ShowChar(unsigned char c)
 	}
 }
 
-
+/**
+  * @brief  This function :
+             - Enables GPIO clock
+             - Configures the USART1 pins on GPIO PA9 PA10
+  * @param  None
+  * @retval None
+  */
 void lcd44780_ShowStr(char *s)
 {
 	while (*s != 0) lcd44780_ShowChar(*s++);
 }
 
+/**
+  * @brief  This function :
+             - Enables GPIO clock
+             - Configures the USART1 pins on GPIO PA9 PA10
+  * @param  None
+  * @retval None
+  */
 void lcd44780_init(void)
 {
 	unsigned char i;
 	
+	//Configuring APB2 bridge and port B
 	HD44780_CLOCK_EN;
 	
-	//Configuring GPIOB.10
+	//Configuring GPIOB.10 = EN
 	GPIOB->CRH &= ~GPIO_CRH_MODE10;  //clear ranks MODE
 	GPIOB->CRH &= ~GPIO_CRH_CNF10;   //clear ranks CNF
 	GPIOB->CRH |=  GPIO_CRH_MODE10_1;//output, 2MHz
 	GPIOB->CRH |=  GPIO_CRH_CNF10_0; //general purpose, open drain
 	
-	
-	//Configuring GPIOB.11
+	//Configuring GPIOB.11 = RS
 	GPIOB->CRH &= ~GPIO_CRH_MODE11;  //clear ranks MODE
 	GPIOB->CRH &= ~GPIO_CRH_CNF11;   //clear ranks CNF
 	GPIOB->CRH |=  GPIO_CRH_MODE11_1;//output, 2MHz
 	GPIOB->CRH |=  GPIO_CRH_CNF11_0; //general purpose, open drain
 	
-	//Configuring GPIOB.12
+	//Configuring GPIOB.12 = D4
 	GPIOB->CRH &= ~GPIO_CRH_MODE12;  //clear ranks MODE
 	GPIOB->CRH &= ~GPIO_CRH_CNF12;   //clear ranks CNF
 	GPIOB->CRH |=  GPIO_CRH_MODE12_1;//output, 2MHz
 	GPIOB->CRH |=  GPIO_CRH_CNF12_0; //general purpose, open drain
 	
-	//Configuring GPIOB.13
+	//Configuring GPIOB.13 = D5
 	GPIOB->CRH &= ~GPIO_CRH_MODE13;  //clear ranks MODE
 	GPIOB->CRH &= ~GPIO_CRH_CNF13;   //clear ranks CNF
 	GPIOB->CRH |=  GPIO_CRH_MODE13_1;//output, 2MHz
 	GPIOB->CRH |=  GPIO_CRH_CNF13_0; //general purpose, open drain
 	
-	//Configuring GPIOB.14
+	//Configuring GPIOB.14 = D6
 	GPIOB->CRH &= ~GPIO_CRH_MODE14;  //clear ranks MODE
 	GPIOB->CRH &= ~GPIO_CRH_CNF14;   //clear ranks CNF
 	GPIOB->CRH |=  GPIO_CRH_MODE14_1;//output, 2MHz
 	GPIOB->CRH |=  GPIO_CRH_CNF14_0; //general purpose, open drain
 	
-	//Configuring GPIOB.15
+	//Configuring GPIOB.15 = D7
 	GPIOB->CRH &= ~GPIO_CRH_MODE15;  //clear ranks MODE
 	GPIOB->CRH &= ~GPIO_CRH_CNF15;   //clear ranks CNF
 	GPIOB->CRH |=  GPIO_CRH_MODE15_1;//output, 2MHz
