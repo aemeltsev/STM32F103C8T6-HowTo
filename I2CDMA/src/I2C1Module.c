@@ -14,6 +14,18 @@ uint8_t I2C_Error;               // Error I2C module
 uint8_t I2C_Timer;               // ?????? ?????? ?????? I2C
 
 /**
+* @brief  Set value Start.
+  * @param  None.
+  * @retval None.
+  */
+void I2C_delay(uint32_t volatile DelayTime_uS)
+{
+	uint32_t DelayTime = 0;
+	DelayTime = (SystemCoreClock/1000000)*DelayTime_uS;
+	for (; DelayTime!=0; DelayTime--);
+}
+
+/**
 * @brief  Initializes peripherals: I2C1, GPIOB, DMA1 channels.
   *           Fclk = 8MHz => Tmaster = 0.125us
 	*           Standart Mode, 100KHz
@@ -159,6 +171,7 @@ void I2C_Reset(void)
 	I2C1->CR1 &= ~I2C_CR1_SWRST;
 }
 
+
 /**
 * @brief  Transmit.
   * @param  I2C_Addr - address slave.
@@ -167,7 +180,7 @@ void I2C_Reset(void)
   * @param  I2C_StopFlag.
   * @retval None.
   */
-void I2C1_CharTX(uint8_t I2C_Addr, uint8_t I2C_Dat)
+void I2C1_TX(uint8_t I2C_Addr, uint8_t I2C_Dat, uint8_t TX_length)
 {
 	I2C_Error = 0x00;                              /*!< Reset error */
 	I2C1->CR2 |= I2C_CR2_ITERREN;                  /*!< Enable iterrupt for I2C error */
@@ -175,6 +188,11 @@ void I2C1_CharTX(uint8_t I2C_Addr, uint8_t I2C_Dat)
 	I2C_Start();
 	//send slave address
 	if(!I2C_Error) I2C_Address(I2C_SLAVE_ADDR);
+	I2C_ByteTX(I2C_Dat);
+	for(;;;)
+	{
+		I2C1->DR
+	}
 	
 	I2C_Stop();
 }
