@@ -138,16 +138,26 @@ void I2C_Address(uint8_t I2C_Temp)
   * @param  Data byte.
   * @retval None.
   */
-void I2C_ByteTX(uint8_t I2C_Temp)
+void I2C_ByteTX(uint8_t adr, uint8_t reg, uint8_t count, uint8_t* data)
 {
-	I2C1->DR = I2C_Temp;
-	while(!(I2C1->SR1 & I2C_SR1_TXE)){
-		
-		if(!I2C_Timer){
-			I2C_Error = I2C_ERR_BUSY;
-			break;
-		}
-	}
+//	I2C1->DR = adr;
+//	while(!(I2C1->SR1 & I2C_SR1_TXE)){
+//		
+//		if(!I2C_Timer){
+//			I2C_Error = I2C_ERR_BUSY;
+//			break;
+//		}
+//	}
+}
+
+/**
+* @brief  Transmit data byte.
+  * @param  Data byte.
+  * @retval None.
+  */
+uint8_t I2C_InitTX(uint8_t adr, uint8_t value, uint8_t last)
+{
+	
 }
 
 /**
@@ -162,7 +172,7 @@ uint8_t I2C_ByteRX(uint8_t adr)
 	I2C1->CR1 |= I2C_CR1_START;                    /*!< START, =0x0100 */
 	while(!(I2C1->SR1 & I2C_SR1_SB))               /*!< wait SB, while(!(I2C1->SR1 & 0x0001)) */
 	(void)I2C1->SR1;                               /*!< clear SB */
-	I2C1->DR = adr;                     /*!< wait ADDR, while(!(I2C1->SR1 & 0x0002)) */
+	I2C1->DR = adr;                                /*!< wait ADDR, while(!(I2C1->SR1 & 0x0002)) */
 	while(!(I2C1->SR1 & I2C_SR1_ADDR));
 	I2C1->CR1 &= ~I2C_CR1_ACK;                     /*!< 1.NACK, =0xFBFF */
 	__disable_irq();
@@ -208,7 +218,7 @@ uint16_t I2C_TwoByteRX(uint8_t adr)
 	vl = I2C1->DR;
 	data |= (uint16_t)(vl<<8);
 	while(I2C1->CR1 & I2C_CR1_STOP);               /*!< wait clear STOP */
-	I2C1->CR1 &= ~I2C_CR1_POS;                      /*!< POS=0 */
+	I2C1->CR1 &= ~I2C_CR1_POS;                     /*!< POS=0 */
 	I2C1->CR1 |= I2C_CR1_ACK;                      /*!< ACK for next byte */
 	return data;
 }
