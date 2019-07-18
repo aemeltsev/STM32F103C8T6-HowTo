@@ -105,6 +105,17 @@ void I2C_Start(void)
 }
 
 /**
+* @brief  Set value Stop.
+  * @param  None.
+  * @retval None.
+  */
+void I2C_Stop(void)
+{
+	I2C1->CR1 |= I2C_CR1_STOP;
+	while((I2C1->SR1 & I2C_SR1_STOPF) == (uint16_t)0x0010);
+}
+
+/**
 * @brief  Transmit address slave.
   * @param  Transmit address(7 bits + bit read/write).
   * @retval None.
@@ -146,31 +157,22 @@ void I2C_ByteTX(uint8_t I2C_Temp)
   */
 uint8_t I2C_ByteRX(void)
 {
-	return (uint8_t)I2C1->DR;
+	uint8_t data;
+	I2C_Start();                                   // START, =0x0100; wait SB, while(!(I2C1->SR1 & 0x0001));
+	(void)I2C1->SR1;                               // clear SB
+	I2C_Address(I2C_SLAVE_ADDR);                   // wait ADDR, while(!(I2C1->SR1 & 0x0002));
+	I2C1->CR1 &= ~I2C_CR1_ACK;                     // 1.NACK, =0xFBFF
+	__disable_irq();
+  (void) I2C1->SR1;                              // 2.reset ADDR
+  (void) I2C1->SR2;                              // 2.reset ADDR
+	I2C_Stop();                                    // 3.STOP, =0x0200
+	__enable_irq();
+	while(!(I2C1->SR1 & I2C_IT_RXNE));             // wait RxNE, while(!(I2C1->SR1 & 0x0040));
+	data = I2C1->DR;
+	while(I2C->CR1 & I2C_CR1_STOP);
+	I2C1->CR1 |= I2C_CR1_ACK;
+	return data;
 }
-
-/**
-* @brief  Set value Stop.
-  * @param  None.
-  * @retval None.
-  */
-void I2C_Stop(void)
-{
-	I2C1->CR1 |= I2C_CR1_STOP;
-	while((I2C1->SR1 & I2C_SR1_STOPF) == (uint16_t)0x0010);
-}
-
-/**
-* @brief  Software reset I2C module.
-  * @param  None.
-  * @retval None.
-  */
-void I2C_Reset(void)
-{
-	I2C1->CR1 |= I2C_CR1_SWRST;
-	I2C1->CR1 &= ~I2C_CR1_SWRST;
-}
-
 
 /**
 * @brief  Transmit.
