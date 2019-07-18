@@ -152,51 +152,65 @@ void I2C_ByteTX(uint8_t I2C_Temp)
 
 /**
 * @brief  Receive data byte.
+This function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
   * @param  None.
   * @retval None.
   */
-uint8_t I2C_ByteRX(void)
+uint8_t I2C_ByteRX(uint8_t adr)
 {
 	uint8_t data;
-	I2C_Start();                                   // START, =0x0100; wait SB, while(!(I2C1->SR1 & 0x0001));
-	(void)I2C1->SR1;                               // clear SB
-	I2C_Address(I2C_SLAVE_ADDR);                   // wait ADDR, while(!(I2C1->SR1 & 0x0002));
-	I2C1->CR1 &= ~I2C_CR1_ACK;                     // 1.NACK, =0xFBFF
+	I2C1->CR1 |= I2C_CR1_START;                    /*!< START, =0x0100 */
+	while(!(I2C1->SR1 & I2C_SR1_SB))               /*!< wait SB, while(!(I2C1->SR1 & 0x0001)) */
+	(void)I2C1->SR1;                               /*!< clear SB */
+	I2C1->DR = adr;                     /*!< wait ADDR, while(!(I2C1->SR1 & 0x0002)) */
+	while(!(I2C1->SR1 & I2C_SR1_ADDR));
+	I2C1->CR1 &= ~I2C_CR1_ACK;                     /*!< 1.NACK, =0xFBFF */
 	__disable_irq();
-  (void) I2C1->SR1;                              // 2.reset ADDR
-  (void) I2C1->SR2;                              // 2.reset ADDR
-	I2C_Stop();                                    // 3.STOP, =0x0200
+  (void) I2C1->SR1;                              /*!< 2.reset ADDR */
+  (void) I2C1->SR2;                              /*!< 2.reset ADDR */
+	I2C1->CR1 |= I2C_CR1_STOP;                     /*!< 3.STOP, =0x0200 */
 	__enable_irq();
-	while(!(I2C1->SR1 & I2C_IT_RXNE));             // wait RxNE, while(!(I2C1->SR1 & 0x0040));
+	while(!(I2C1->SR1 & I2C_SR1_RXNE));            /*!< wait RxNE, while(!(I2C1->SR1 & 0x0040)) */
 	data = I2C1->DR;
-	while(I2C->CR1 & I2C_CR1_STOP);
-	I2C1->CR1 |= I2C_CR1_ACK;
+	while(I2C1->CR1 & I2C_CR1_STOP);               /*!< wait clear STOP */
+	I2C1->CR1 |= I2C_CR1_ACK;                      /*!< ACK for next byte */
 	return data;
 }
 
 /**
-* @brief  Transmit.
-  * @param  I2C_Addr - address slave.
-  * @param  *ptr - pointer to array input .
-  * @param  I2C_NumByte - .
-  * @param  I2C_StopFlag.
+* @brief  Receive two data byte.
+This function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
+  * @param  None.
   * @retval None.
   */
-void I2C1_TX(uint8_t I2C_Addr, uint8_t I2C_Dat, uint8_t TX_length)
+uint16_t I2C_TwoByteRX(uint8_t adr)
 {
-	I2C_Error = 0x00;                              /*!< Reset error */
-	I2C1->CR2 |= I2C_CR2_ITERREN;                  /*!< Enable iterrupt for I2C error */
-	//START generate
-	I2C_Start();
-	//send slave address
-	if(!I2C_Error) I2C_Address(I2C_SLAVE_ADDR);
-	I2C_ByteTX(I2C_Dat);
-	for(;;;)
-	{
-		I2C1->DR
-	}
-	
-	I2C_Stop();
+	uint8_t data=0;
+	uint8_t vl;
+	I2C1->CR1 |= I2C_CR1_START;                    /*!< START, =0x0100 */
+	while(!(I2C1->SR1 & I2C_SR1_SB))               /*!< wait SB, while(!(I2C1->SR1 & 0x0001)) */
+	(void)I2C1->SR1;
+	I2C1->DR = adr;
+	while(!(I2C1->SR1 & I2C_SR1_ADDR));            /*!< wait ADDR, while(!(I2C1->SR1 & 0x0002)) */
+	I2C1->CR1 |= I2C_CR1_POS;                      /*!< POS=1 */
+	__disable_irq();
+	(void) I2C1->SR1;                              /*!< reset ADDR */
+  (void) I2C1->SR2;                              /*!< reset ADDR */
+	I2C1->CR1 &= ~I2C_CR1_ACK;                     /*!< NACK, =0xFBFF */
+	__enable_irq();
+	while(!(I2C1->SR1 & I2C_SR1_BTF));             /*!< wait BFT */
+	__disable_irq();
+	I2C1->CR1 |= I2C_CR1_STOP;                     /*!< STOP, =0x0200 */
+	vl = I2C1->DR;
+	data |= (uint16_t)vl;
+	__enable_irq();
+	//while(!(I2C1->SR1 & I2C_SR1_RXNE));            /*!< wait RxNE, while(!(I2C1->SR1 & 0x0040)) */
+	vl = I2C1->DR;
+	data |= (uint16_t)(vl<<8);
+	while(I2C1->CR1 & I2C_CR1_STOP);               /*!< wait clear STOP */
+	I2C1->CR1 &= ~I2C_CR1_POS;                      /*!< POS=0 */
+	I2C1->CR1 |= I2C_CR1_ACK;                      /*!< ACK for next byte */
+	return data;
 }
 
 /**

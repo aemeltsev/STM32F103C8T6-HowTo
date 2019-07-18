@@ -27,7 +27,7 @@ void I2C1_LowLevelInit(void);
 void I2C_Start(void);
 void I2C_Address(uint8_t I2C_Temp);
 void I2C_ByteTX(uint8_t I2C_Temp);
-uint8_t I2C_ByteRX(void);
+uint8_t I2C_ByteRX(uint8_t adr);
 void I2C_Stop(void);
 void I2C_Reset(void);
 void I2C_DMARx(uint8_t I2C_Addr, uint8_t *ptr, uint8_t I2C_NumByte, uint8_t I2C_StopFlag);
