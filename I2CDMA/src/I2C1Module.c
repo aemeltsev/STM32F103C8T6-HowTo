@@ -135,6 +135,7 @@ void I2C_Address(uint8_t I2C_Temp)
 
 /**
 * @brief  Transmit data byte.
+This function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
   * @param  Data byte.
   * @retval None.
   */
@@ -152,6 +153,7 @@ void I2C_ByteTX(uint8_t adr, uint8_t reg, uint8_t count, uint8_t* data)
 
 /**
 * @brief  Transmit data byte.
+This function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
   * @param  Data byte.
   * @retval None.
   */
