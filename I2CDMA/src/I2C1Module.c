@@ -159,7 +159,26 @@ This function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
   */
 uint8_t I2C_InitTX(uint8_t adr, uint8_t value, uint8_t last)
 {
-	
+	I2C1->CR1 |= I2C_CR1_START;                    /*!< START, =0x0100 */
+	while(!(I2C1->SR1 & I2C_SR1_SB));              /*!< wait SB, while(!(I2C1->SR1 & 0x0001)) */
+	(void)I2C1->SR1;                               /*!< clear SB */
+	I2C1->DR=adr;								                   /*!< send ADDR */
+	while (!(I2C1->SR1 & I2C_SR1_ADDR))    	       /*!< wait ADDR */
+		{
+			if(I2C1->SR1 & ~I2C_CR1_ACK)				       /*!< if NACK */
+				return 1;
+		}
+	(void) I2C1->SR1;                              /*!< reset ADDR */
+  (void) I2C1->SR2;                              /*!< reset ADDR */
+	I2C1->DR=value;
+	if (last == (uint8_t)0x01) {
+		while(!(I2C1->SR1 & I2C_SR1_BTF));           /*!< wait BFT */
+		I2C1->CR1 |= I2C_CR1_STOP;                   /*!< Program the STOP bit */
+        while (I2C1->CR1 & I2C_CR1_STOP);        /*!< Wait until STOP bit is cleared by hardware */
+	} else {
+		while(!(I2C1->SR1 & I2C_SR1_TXE));           /*!< wait TXE bit */
+	}
+	return 0;
 }
 
 /**
