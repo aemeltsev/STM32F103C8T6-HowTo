@@ -3,7 +3,7 @@
   * @file    I2C1Module.c
   * @author  IRQ
   * @version V0.1
-  * @date    05-March-2019
+  * @date    March-2019
   * @brief   Master Mode, 7-bit Address.
   ******************************************************************************
   */
@@ -14,11 +14,11 @@ uint8_t I2C_Error;               // Error I2C module
 uint8_t I2C_Timer;               // ?????? ?????? ?????? I2C
 
 /**
-* @brief  Set value Start.
-  * @param  None.
-  * @retval None.
-  */
-void I2C_delay(uint32_t volatile DelayTime_uS)
+* @brief  Set delay time.
+* @param  DelayTime_uS - in us.
+* @retval None.
+*/
+void I2C_delay(int32_t volatile DelayTime_uS)
 {
 	uint32_t DelayTime = 0;
 	DelayTime = (SystemCoreClock/1000000)*DelayTime_uS;
@@ -26,64 +26,92 @@ void I2C_delay(uint32_t volatile DelayTime_uS)
 }
 
 /**
-* @brief  Initializes peripherals: I2C1, GPIOB, DMA1 channels.
-  *           Fclk = 8MHz => Tmaster = 0.125us
-	*           Standart Mode, 100KHz
-  *           Fi2c = 100KHz => Period(I2C) = 10us
-	*           For StandartMode Trise = 1000ns
-	*        Configure output pins.
-	*        SCL - pin42 - PB6
-	*        SDA - pin43 - PB7
-  * @param  None.
-  * @retval None.
-  */
-void I2C1_LowLevelInit(void)
+* @brief  Initializes peripherals: GPIOB.
+* @param  None.
+* @retval None.
+*/
+void I2C1_GpioInit(void)
 {
-	/* Clock enable */
-	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;    /*!< Enable clocking PortB */
-	RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;    /*!< Enable clocking I2C1 module */
-	RCC->AHBENR |= RCC_AHBENR_DMA1EN;      /*!< Enable clocking DMA1 */
+	/*Clock enable*/
+	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;    /*Enable clocking PortB*/
 	
-	/* Configuration GPIOB.6 */
-	GPIOB->CRL &= ~GPIO_CRL_MODE6;   /*!< clear bits MODE */
-	GPIOB->CRL &= ~GPIO_CRL_CNF6;    /*!< clear bits CNF */
-	GPIOB->CRL |=  GPIO_CRL_MODE6_1; /*!< output, 2MHz */
-	GPIOB->CRL |=  GPIO_CRL_CNF6;    /*!< alternate function, open drain */
+	/*Configuration GPIOB.6*/
+	GPIOB->CRL &= ~GPIO_CRL_MODE6;   /*clear bits MODE*/
+	GPIOB->CRL &= ~GPIO_CRL_CNF6;    /*clear bits CNF*/
+	GPIOB->CRL |=  GPIO_CRL_MODE6_1; /*output, 2MHz*/
+	GPIOB->CRL |=  GPIO_CRL_CNF6;    /*alternate function, open drain*/
 	
-	/* Configuration GPIOB.7 */
-	GPIOB->CRL &= ~GPIO_CRL_MODE7;   /*!< clear bits MODE */
-	GPIOB->CRL &= ~GPIO_CRL_CNF7;    /*!< clear bits CNF */
-	GPIOB->CRL |=  GPIO_CRL_MODE7_1; /*!< output, 2MHz */
-	GPIOB->CRL |=  GPIO_CRL_CNF7;    /*!< alternate function, open drain */
+	/*Configuration GPIOB.7*/
+	GPIOB->CRL &= ~GPIO_CRL_MODE7;   /*clear bits MODE*/
+	GPIOB->CRL &= ~GPIO_CRL_CNF7;    /*clear bits CNF*/
+	GPIOB->CRL |=  GPIO_CRL_MODE7_1; /*output, 2MHz*/
+	GPIOB->CRL |=  GPIO_CRL_CNF7;    /*alternate function, open drain*/
+}
+
+/**
+* @brief Initializes peripherals: I2C1.
+* Fclk = 8MHz => Tmaster = 0.125us
+* Standart Mode, 100KHz
+* Fi2c = 100KHz => Period(I2C) = 10us
+* For StandartMode Trise = 1000ns
+* Configure output pins.
+* SCL - pin42 - PB6
+* SDA - pin43 - PB7
+* @param  None.
+* @retval None.
+*/
+void I2C1_Init(void)
+{
+	RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;    /*Enable clocking I2C1 module*/
 	
 	/* Configuration I2C1 */
-	I2C1->CR2 &= ~I2C_CR2_FREQ;      /*!< Reset peripheral clock frequency */
-	I2C1->CR2 |= 8;                  /*!< Clock frequency 8Mhz */
-	I2C1->CCR &= ~I2C_CCR_CCR;       /*!< Reset clock control register */
-	I2C1->CCR |= 40;                 /*!< CCR=Period(I2C)/(2xTmaster) (for StandartMode) */
-	I2C1->TRISE = 9;                 /*!< TRISER=(Trise/Tmaster)+1=(1/0.125)+1=9 */
-	I2C1->CCR |= I2C_CCR_DUTY;       /*!< Fast Mode Duty Cycle - 1: tlow/thigh = 16/9 */
-	//I2C1->CR1 |= I2C_CR1_ACK;        /*!< Acknowledge Enable */
-	//I2C1->CR2 |= I2C_CR2_LAST;       /*!< DMA Last Transfer */
-	I2C1->CR1 |= I2C_CR1_PE;         /*!< Enable I2C module */
+	I2C2->CR1 &= ~I2C_CR1_SMBUS;     /*Use I2C*/
 	
-	/* Configuration channel 7 DMA - I2C1_RX */
-	DMA1_Channel7->CCR &= ~DMA_CCR7_CIRC;                         /*!< Not circular mode */
-	DMA1_Channel7->CCR |= DMA_CCR7_PL;                            /*!< Very high channel priority level */
-	DMA1_Channel7->CCR &= ~DMA_CCR7_MEM2MEM;                      /*!< Memory to memory mode disable */
-	DMA1_Channel7->CCR |= DMA_CCR7_MINC;                          /*!< Memory increment mode */
-	DMA1_Channel7->CCR &= ~DMA_CCR7_DIR;                          /*!< Data transfer direction read from peripheral*/
-	DMA1_Channel7->CPAR = (*((volatile uint32_t *)I2C1->DR));     /*!< Address I2C1_DR */
+	I2C1->CR2 &= ~I2C_CR2_FREQ;      /*Reset peripheral clock frequency*/
+	I2C1->CR2 |= I2C_SET_CLK_FRQ;    /*Clock frequency 8Mhz*/
 	
-	/* Configuration channel 6 DMA - I2C1_TX */
-	DMA1_Channel6->CCR &= ~DMA_CCR6_CIRC;                         /*!< Not circular mode */
-	DMA1_Channel6->CCR |= DMA_CCR6_PL;                            /*!< Very high channel priority level */
-	DMA1_Channel6->CCR &= ~DMA_CCR6_MEM2MEM;                      /*!< Memory to memory mode disable */
-	DMA1_Channel6->CCR |= DMA_CCR6_MINC;                          /*!< Memory increment mode */
-	DMA1_Channel6->CCR &= ~DMA_CCR6_DIR;                          /*!< Data transfer direction read from peripheral*/
-	DMA1_Channel6->CPAR = (*((volatile uint32_t *)I2C1->DR));     /*!< Address I2C1_DR */
-	    
+	I2C1->CCR &= ~I2C_CCR_CCR;       /*Reset clock control register*/
+	I2C1->CCR |= I2C_SET_CCR;        /*CCR=Period(I2C)/(2xTmaster) (for StandartMode)*/
+	
+	I2C1->TRISE = I2C_SET_TRISE;     /*TRISER=(Trise/Tmaster)+1=(1/0.125)+1=9*/
+	I2C1->CCR |= I2C_CCR_DUTY;       /*Fast Mode Duty Cycle - 1: tlow/thigh = 16/9*/
+	
+	//I2C1->CR2 |= I2C_CR2_LAST;       /*DMA Last Transfer*/
+	I2C1->CR1 |= I2C_CR1_PE;         /*Enable I2C module*/
 }
+
+/**
+* @brief  Initializes peripherals: DMA1 channels.
+* @param  None.
+* @retval None.
+*/
+void I2C1_DmaInit(void)
+{
+	RCC->AHBENR |= RCC_AHBENR_DMA1EN;      /*Enable clocking DMA1*/
+	
+	/*Configuration channel 7 DMA - I2C1_RX*/
+	DMA1_Channel7->CCR &= ~DMA_CCR7_CIRC;                         /*Not circular mode*/
+	DMA1_Channel7->CCR |= DMA_CCR7_PL;                            /*Very high channel priority level*/
+	DMA1_Channel7->CCR &= ~DMA_CCR7_MEM2MEM;                      /*Memory to memory mode disable*/
+	DMA1_Channel7->CCR |= DMA_CCR7_MINC;                          /*Memory increment mode*/
+	DMA1_Channel7->CCR &= ~DMA_CCR7_DIR;                          /*Data transfer direction read from peripheral*/
+	DMA1_Channel7->CPAR = (*((volatile uint32_t *)I2C1->DR));     /*Address I2C1_DR*/
+	
+	/*Configuration channel 6 DMA - I2C1_TX*/
+	DMA1_Channel6->CCR &= ~DMA_CCR6_CIRC;                         /*Not circular mode*/
+	DMA1_Channel6->CCR |= DMA_CCR6_PL;                            /*Very high channel priority level*/
+	DMA1_Channel6->CCR &= ~DMA_CCR6_MEM2MEM;                      /*Memory to memory mode disable*/
+	DMA1_Channel6->CCR |= DMA_CCR6_MINC;                          /*Memory increment mode*/
+	DMA1_Channel6->CCR &= ~DMA_CCR6_DIR;                          /*Data transfer direction read from peripheral*/
+	DMA1_Channel6->CPAR = (*((volatile uint32_t *)I2C1->DR));     /*Address I2C1_DR*/   
+}
+
+/**
+* @brief  Initializes peripherals: DMA1 channels.
+* @param  None.
+* @retval None.
+*/
+
 
 /**
 * @brief  Set value Start.
@@ -106,9 +134,9 @@ void I2C_Start(void)
 
 /**
 * @brief  Set value Stop.
-  * @param  None.
-  * @retval None.
-  */
+* @param  None.
+* @retval None.
+*/
 void I2C_Stop(void)
 {
 	I2C1->CR1 |= I2C_CR1_STOP;
@@ -116,10 +144,20 @@ void I2C_Stop(void)
 }
 
 /**
+* @brief  Generate NACK.
+* @param  None.
+* @retval None.
+*/
+void I2C_Nack(void)
+{
+	I2C1->CR1 &= ~I2C_CR1_ACK;
+}
+
+/**
 * @brief  Transmit address slave.
-  * @param  Transmit address(7 bits + bit read/write).
-  * @retval None.
-  */
+* @param  Transmit address(7 bits + bit read/write).
+* @retval None.
+*/
 void I2C_Address(uint8_t I2C_Temp)
 {
 	I2C1->DR = I2C_Temp;
@@ -134,55 +172,47 @@ void I2C_Address(uint8_t I2C_Temp)
 }
 
 /**
-* @brief  Transmit data byte.
-Function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
-  * @param  Data byte.
-  * @retval None.
-  */
-void I2C_ByteTX(uint8_t adr, uint8_t reg, uint8_t count, uint8_t* data)
+* @brief  Transmit(write) data byte using polling.
+* @param  regaddr - the address of internal register to write.
+* @param  data - the data to write.
+* @param  last - number of bytes to write.
+* @retval None.
+*/
+void I2C_TX(uint8_t regaddr, uint8_t data)
 {
-//	I2C1->DR = adr;
-//	while(!(I2C1->SR1 & I2C_SR1_TXE)){
-//		
-//		if(!I2C_Timer){
-//			I2C_Error = I2C_ERR_BUSY;
-//			break;
-//		}
-//	}
+	I2C1->CR1 |= I2C_CR1_START;                    /*START, = 0x0100*/
+	
+	/*Test on EV5 and clear it*/
+	while(!(I2C1->SR1 & I2C_SR1_SB)){};            /*wait SB, while(!(I2C1->SR1 & 0x0001))*/
+		(void)I2C1->SR1;                             /*clear SB*/
+	
+	/*ADDR*/
+	I2C1->DR = I2C_SLAVE_ADDR;		                 /*Send slave address*/
+	/*Test on EV6 and clear it*/
+	while (!(I2C1->SR1 & I2C_SR1_ADDR)){}    	     /*wait ADDR*/
+	(void) I2C1->SR1;                              /*reset ADDR*/
+  (void) I2C1->SR2;                              /*reset ADDR*/
+		
+	/*Send the high byte of internal address for write*/
+	I2C1->DR=(uint8_t) (regaddr >> 8);
+	/*Test on EV8*/
+	while (!(I2C1->SR1 & I2C_SR1_TXE)){};
+		
+	/*Send the low byte of internal address for write*/
+	I2C1->DR=(uint8_t)(regaddr & 0x00FF);
+	/*Test on EV8*/
+	while (!(I2C1->SR1 & I2C_SR1_TXE)){};
+		
+	/*Send the byte to be written*/
+	I2C1->DR=data;
+	
+	while(!(I2C1->SR1 & I2C_SR1_BTF)){};       /*wait BFT - Byte transfer finished*/
+	I2C1->CR1 |= I2C_CR1_STOP;                 /*Program the STOP bit*/
+	while (I2C1->CR1 & I2C_CR1_STOP);          /*Wait until STOP bit is cleared by hardware*/
 }
 
 /**
-* @brief  Transmit data byte.
-Function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
-  * @param  Data byte.
-  * @retval None.
-  */
-uint8_t I2C_InitTX(uint8_t adr, uint8_t value, uint8_t last)
-{
-	I2C1->CR1 |= I2C_CR1_START;                    /*!< START, =0x0100 */
-	while(!(I2C1->SR1 & I2C_SR1_SB));              /*!< wait SB, while(!(I2C1->SR1 & 0x0001)) */
-	(void)I2C1->SR1;                               /*!< clear SB */
-	I2C1->DR=adr;								                   /*!< send ADDR */
-	while (!(I2C1->SR1 & I2C_SR1_ADDR))    	       /*!< wait ADDR */
-		{
-			if(I2C1->SR1 & ~I2C_CR1_ACK)				       /*!< if NACK */
-				return 1;
-		}
-	(void) I2C1->SR1;                              /*!< reset ADDR */
-  (void) I2C1->SR2;                              /*!< reset ADDR */
-	I2C1->DR=value;
-	if (last == (uint8_t)0x01) {
-		while(!(I2C1->SR1 & I2C_SR1_BTF));           /*!< wait BFT */
-		I2C1->CR1 |= I2C_CR1_STOP;                   /*!< Program the STOP bit */
-        while (I2C1->CR1 & I2C_CR1_STOP);        /*!< Wait until STOP bit is cleared by hardware */
-	} else {
-		while(!(I2C1->SR1 & I2C_SR1_TXE));           /*!< wait TXE bit */
-	}
-	return 0;
-}
-
-/**
-* @brief  Receive data byte.
+* @brief  Receive(read) data byte.
 Function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
   * @param  None.
   * @retval None.
@@ -209,7 +239,7 @@ uint8_t I2C_ByteRX(uint8_t adr)
 }
 
 /**
-* @brief  Receive two data byte.
+* @brief  Receive(read) two data byte.
 Function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
   * @param  None.
   * @retval None.
