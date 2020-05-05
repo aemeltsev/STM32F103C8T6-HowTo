@@ -184,7 +184,7 @@ void I2C_Address(uint8_t I2C_Temp)
 */
 void I2C_TX(uint16_t regaddr, uint8_t data)
 {
-	/*Restart*/
+	/*Start*/
 	I2C1->CR1 |= I2C_CR1_START;                    /*START, = 0x0100*/
 	
 	/*Test on EV5 and clear it*/
@@ -218,14 +218,13 @@ void I2C_TX(uint16_t regaddr, uint8_t data)
 
 /**
 * @brief  Receive(read) data byte.
-Function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
-  * @param  None.
-  * @retval None.
-  */
+* @param  regaddr - the address of internal register to read.
+* @retval None.
+*/
 uint8_t I2C_RX(uint16_t regaddr)
 {
 	uint8_t data;
-	/*Restart*/
+	/*Start*/
 	I2C1->CR1 |= I2C_CR1_START;                    /*START, = 0x0100*/
 	
 	/*Test on EV5 and clear it*/
@@ -233,23 +232,43 @@ uint8_t I2C_RX(uint16_t regaddr)
 		(void)I2C1->SR1;                             /*clear SB*/
 		
 	/*ADDR*/
+	I2C1->DR = I2C_SLAVE_ADDR;
+	/*Test on EV6 and clear it*/
+	while(!(I2C1->SR1 & I2C_SR1_ADDR)){};          /*wait ADDR, while(!(I2C1->SR1 & 0x0002))*/
+  (void) I2C1->SR1;                              /*2.reset ADDR*/
+  (void) I2C1->SR2;                              /*2.reset ADDR */
+	
+	/*Send the high byte of internal address for read*/
+	I2C1->DR=(uint8_t) (regaddr>>8);
+	/*Test on EV8*/
+  while (!(I2C1->SR1 & I2C_SR1_TXE)){};
+	
+	/*Send the low byte of internal address for read*/
+  I2C1->DR=(uint8_t)(regaddr &0x00FF);
+	/*Test on EV8*/
+  while (!(I2C1->SR1 & I2C_SR1_TXE)){};
+	
+	/*Restart*/
+	I2C1->CR1 |= I2C_CR1_START;
+	
+	/*Test on EV5 and clear it*/
+	while(!(I2C1->SR1 & I2C_SR1_SB)){};            /*wait SB, while(!(I2C1->SR1 & 0x0001))*/
+		(void)I2C1->SR1;                             /*clear SB*/
+
+	/*ADDR*/
 	I2C1->DR = I2C_SLAVE_ADDR | 0x01;
 	/*Test on EV6 and clear it*/
 	while(!(I2C1->SR1 & I2C_SR1_ADDR)){};          /*wait ADDR, while(!(I2C1->SR1 & 0x0002))*/
   (void) I2C1->SR1;                              /*2.reset ADDR*/
   (void) I2C1->SR2;                              /*2.reset ADDR */
 	
-	I2C1->DR=(uint8_t) (regaddr>>8);
-  while (!(I2C1->SR1 & I2C_SR1_TXE)){};
-  I2C1->DR=(uint8_t)(regaddr &0x00FF);
-  while (!(I2C1->SR1 & I2C_SR1_TXE)){}; 
-
-	I2C1->CR1 |= I2C_CR1_STOP;                     /*!< 3.STOP, =0x0200 */
-	__enable_irq();
-	while(!(I2C1->SR1 & I2C_SR1_RXNE));            /*!< wait RxNE, while(!(I2C1->SR1 & 0x0040)) */
+	/*NACK*/
+	I2C1->CR1 &= ~I2C_CR1_ACK;
+	while(!(I2C1->SR1 & I2C_SR1_RXNE));            /*wait RxNE, while(!(I2C1->SR1 & 0x0040))*/
+	
+	/*Read data*/
 	data = I2C1->DR;
-	while(I2C1->CR1 & I2C_CR1_STOP);               /*!< wait clear STOP */
-	I2C1->CR1 |= I2C_CR1_ACK;                      /*!< ACK for next byte */
+	I2C1->CR1 |= I2C_CR1_STOP;                      /*Generate STOP*/
 	return data;
 }
 
