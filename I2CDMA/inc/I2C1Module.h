@@ -30,14 +30,15 @@
  */
 
 void I2C1_GpioInit(void);
-void I2C1_Init(void);
+void I2C1_ConfInit(void);
 void I2C1_DmaInit(void);
+void I2C1_Init(void);
 
 void I2C_Start(void);
 void I2C_Address(uint8_t I2C_Temp);
 void I2C_delay(int32_t volatile DelayTime_uS);
-void I2C_TX(uint8_t regaddr, uint8_t data);
-uint8_t I2C_ByteRX(uint8_t adr);
+void I2C_TX(uint16_t regaddr, uint8_t data);
+uint8_t I2C_RX(uint16_t regaddr);
 void I2C_Stop(void);
 void I2C_DMARx(uint8_t I2C_Addr, uint8_t *ptr, uint8_t I2C_NumByte, uint8_t I2C_StopFlag);
 void I2C_DMATx(uint8_t I2C_Addr, uint8_t *ptr, uint8_t I2C_NumByte, uint8_t I2C_StopFlag);

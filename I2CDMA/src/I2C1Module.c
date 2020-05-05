@@ -49,18 +49,18 @@ void I2C1_GpioInit(void)
 }
 
 /**
-* @brief Initializes peripherals: I2C1.
-* Fclk = 8MHz => Tmaster = 0.125us
-* Standart Mode, 100KHz
-* Fi2c = 100KHz => Period(I2C) = 10us
-* For StandartMode Trise = 1000ns
-* Configure output pins.
-* SCL - pin42 - PB6
-* SDA - pin43 - PB7
+* @brief  Initializes peripherals: I2C1.
+*         Fclk = 8MHz => Tmaster = 0.125us
+*         Standart Mode, 100KHz
+*         Fi2c = 100KHz => Period(I2C) = 10us
+*         For StandartMode Trise = 1000ns
+*         Configure output pins.
+*         SCL - pin42 - PB6
+*         SDA - pin43 - PB7
 * @param  None.
 * @retval None.
 */
-void I2C1_Init(void)
+void I2C1_ConfInit(void)
 {
 	RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;    /*Enable clocking I2C1 module*/
 	
@@ -107,11 +107,16 @@ void I2C1_DmaInit(void)
 }
 
 /**
-* @brief  Initializes peripherals: DMA1 channels.
+* @brief  Initialize all peripherals.
 * @param  None.
 * @retval None.
 */
-
+void I2C1_Init(void)
+{
+	I2C1_GpioInit();
+	I2C1_ConfInit();
+	I2C1_DmaInit();
+}
 
 /**
 * @brief  Set value Start.
@@ -172,14 +177,14 @@ void I2C_Address(uint8_t I2C_Temp)
 }
 
 /**
-* @brief  Transmit(write) data byte using polling.
+* @brief  Transmit(write) data _byte_ using polling.
 * @param  regaddr - the address of internal register to write.
 * @param  data - the data to write.
-* @param  last - number of bytes to write.
 * @retval None.
 */
-void I2C_TX(uint8_t regaddr, uint8_t data)
+void I2C_TX(uint16_t regaddr, uint8_t data)
 {
+	/*Restart*/
 	I2C1->CR1 |= I2C_CR1_START;                    /*START, = 0x0100*/
 	
 	/*Test on EV5 and clear it*/
@@ -217,18 +222,28 @@ Function from this https://gitlab.com/flank1er/stm32_bare_metal/tree/master
   * @param  None.
   * @retval None.
   */
-uint8_t I2C_ByteRX(uint8_t adr)
+uint8_t I2C_RX(uint16_t regaddr)
 {
 	uint8_t data;
-	I2C1->CR1 |= I2C_CR1_START;                    /*!< START, =0x0100 */
-	while(!(I2C1->SR1 & I2C_SR1_SB))               /*!< wait SB, while(!(I2C1->SR1 & 0x0001)) */
-	(void)I2C1->SR1;                               /*!< clear SB */
-	I2C1->DR = adr;                                /*!< wait ADDR, while(!(I2C1->SR1 & 0x0002)) */
-	while(!(I2C1->SR1 & I2C_SR1_ADDR));
-	I2C1->CR1 &= ~I2C_CR1_ACK;                     /*!< 1.NACK, =0xFBFF */
-	__disable_irq();
-  (void) I2C1->SR1;                              /*!< 2.reset ADDR */
-  (void) I2C1->SR2;                              /*!< 2.reset ADDR */
+	/*Restart*/
+	I2C1->CR1 |= I2C_CR1_START;                    /*START, = 0x0100*/
+	
+	/*Test on EV5 and clear it*/
+	while(!(I2C1->SR1 & I2C_SR1_SB)){};            /*wait SB, while(!(I2C1->SR1 & 0x0001))*/
+		(void)I2C1->SR1;                             /*clear SB*/
+		
+	/*ADDR*/
+	I2C1->DR = I2C_SLAVE_ADDR | 0x01;
+	/*Test on EV6 and clear it*/
+	while(!(I2C1->SR1 & I2C_SR1_ADDR)){};          /*wait ADDR, while(!(I2C1->SR1 & 0x0002))*/
+  (void) I2C1->SR1;                              /*2.reset ADDR*/
+  (void) I2C1->SR2;                              /*2.reset ADDR */
+	
+	I2C1->DR=(uint8_t) (regaddr>>8);
+  while (!(I2C1->SR1 & I2C_SR1_TXE)){};
+  I2C1->DR=(uint8_t)(regaddr &0x00FF);
+  while (!(I2C1->SR1 & I2C_SR1_TXE)){}; 
+
 	I2C1->CR1 |= I2C_CR1_STOP;                     /*!< 3.STOP, =0x0200 */
 	__enable_irq();
 	while(!(I2C1->SR1 & I2C_SR1_RXNE));            /*!< wait RxNE, while(!(I2C1->SR1 & 0x0040)) */
