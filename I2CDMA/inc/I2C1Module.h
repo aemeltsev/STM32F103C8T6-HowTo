@@ -9,6 +9,7 @@
   */
 	
 #include "stm32f10x.h"
+#include <stdint.h>
 
 /* Define data and control lines  */
 #define LAST    ((uint8_t)0x01)
@@ -28,18 +29,17 @@
  *
  ***************************************************************
  */
+void I2C_delay(int32_t volatile DelayTime_uS);
 
 void I2C1_GpioInit(void);
 void I2C1_ConfInit(void);
 void I2C1_DmaInit(void);
 void I2C1_Init(void);
 
-void I2C_Start(void);
-void I2C_Address(uint8_t I2C_Temp);
-void I2C_delay(int32_t volatile DelayTime_uS);
-void I2C_TX(uint16_t regaddr, uint8_t data);
+bool I2C_TX(uint16_t regaddr, uint8_t data);
+bool I2C_TX_PAGE(uint16_t regaddr, uint8_t *data_ptr, uint16_t data_length);
 uint8_t I2C_RX(uint16_t regaddr);
-void I2C_Stop(void);
-void I2C_DMARx(uint8_t I2C_Addr, uint8_t *ptr, uint8_t I2C_NumByte, uint8_t I2C_StopFlag);
-void I2C_DMATx(uint8_t I2C_Addr, uint8_t *ptr, uint8_t I2C_NumByte, uint8_t I2C_StopFlag);
+bool I2C_RX_PAGE(uint16_t regaddr, uint8_t *data_ptr, uint16_t data_length);
+void I2C_DMA_RX(uint16_t regaddr, uint8_t *data_ptr, uint16_t data_length, uint8_t stop_flag);
+void I2C_DMA_TX(uint16_t regaddr, uint8_t *data_ptr, uint16_t data_length, uint8_t stop_flag);
 
