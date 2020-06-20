@@ -436,14 +436,24 @@
               <FilePath>.\main.c</FilePath>
             </File>
             <File>
-              <FileName>USART.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\USART.c</FilePath>
+              <FileName>USARTInter.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\inc\USARTInter.h</FilePath>
             </File>
             <File>
-              <FileName>USART.h</FileName>
+              <FileName>USARTPool.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\inc\USART.h</FilePath>
+              <FilePath>.\inc\USARTPool.h</FilePath>
+            </File>
+            <File>
+              <FileName>USARTInter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\USARTInter.c</FilePath>
+            </File>
+            <File>
+              <FileName>USARTPool.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\USARTPool.c</FilePath>
             </File>
           </Files>
         </Group>
