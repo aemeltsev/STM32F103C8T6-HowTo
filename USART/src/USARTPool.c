@@ -108,13 +108,13 @@ int _write(int handle, char* data, int size)
 		#if (USART_INTRF_IN_USE == USART_INTRF2)
 		while((USART2->SR &USART_SR_TXE)==USART_SR_TXE){};
 		// Transmit data
-		USART1->DR = (data[i] & (uint16_t)0x01FF);
+		USART2->DR = (data[i] & (uint16_t)0x01FF);
 		#endif
 			
 		#if (USART_INTRF_IN_USE == USART_INTRF3)
-		while((USART1->SR &USART_SR_TXE)==USART_SR_TXE){};
+		while((USART3->SR &USART_SR_TXE)==USART_SR_TXE){};
 		// Transmit data
-		USART1->DR = (data[i] & (uint16_t)0x01FF);
+		USART3->DR = (data[i] & (uint16_t)0x01FF);
 		#endif
 	}	
 }
@@ -122,6 +122,12 @@ int _write(int handle, char* data, int size)
 #if (USART_INTRF_IN_USE == USART_INTRF1)
 extern void USART1_IRQHandler(void)
 {
+  if( USART1->SR & USART_SR_RXNE ) 
+	{
+		char c = USART1->DR;
+		rbuf_write(rb, c);
+		if( c == '\r' ) { newline = 1; }
+	}
 }
 #endif // #if (USART_INTRF_NUMBER == USART_INTRF1)
 
@@ -130,7 +136,7 @@ extern void USART2_IRQHandler(void)
 {
 	if( USART2->SR & USART_SR_RXNE ) 
 	{
-		char c = USART1->DR;
+		char c = USART2->DR;
 		rbuf_write(rb, c);
 		if( c == '\r' ) { newline = 1; }
 	}
@@ -140,6 +146,12 @@ extern void USART2_IRQHandler(void)
 #if (USART_INTRF_IN_USE == USART_INTRF3)
 extern void USART3_IRQHandler(void)
 {
+	if( USART3->SR & USART_SR_RXNE ) 
+	{
+		char c = USART3->DR;
+		rbuf_write(rb, c);
+		if( c == '\r' ) { newline = 1; }
+	}
 }
 #endif // #if (USART_INTRF_NUMBER == USART_INTRF3)
 
