@@ -18,6 +18,7 @@
 // Library configuration
 // Select USART number
 #define USART_INTRF_IN_USE							(USART_INTRF2)
+#define USART_BAUDRATE                  (9600)
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/

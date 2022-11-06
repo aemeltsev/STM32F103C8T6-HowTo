@@ -9,6 +9,8 @@ void USART_Init(void)
 	__enable_irq();
 	NVIC_SetPriorityGrouping(0);
 	
+	uint16_t uartdiv = SystemCoreClock / USART_BAUDRATE;
+	
 	#if (USART_INTRF_IN_USE == USART_INTRF1)
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_AFIOEN; //Enable the peripheral clock of GPIOA & alter function clock
 	/*TX*/
@@ -22,7 +24,9 @@ void USART_Init(void)
 	
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;                    //Enable the peripheral clock USART1
   /*Configure USART1*/
-  USART1->BRR = USART_BAUDRATE;                            //Baud rate generation - Tx/Rx baud = fck/(16*USARTDIV)
+  /*Baud rate generation - Tx/Rx baud = fck/(16*USARTDIV)*/
+	USART2->BRR = ((( uartdiv / 16 ) << USART_BRR_DIV_Mantissa ) |
+	               (( uartdiv % 16 ) << USART_BRR_DIV_Fraction )); //0x341;
 	USART1->CR1 &= ~USART_CR1_M;                             //8 data bits
 	USART1->CR1 &= ~(USART_CR1_PS | USART_CR1_PCE);          //no parity 
 	USART1->CR2 &= ~USART_CR2_STOP;                          //1 stop bit (STOP[13:12] = 00
@@ -47,9 +51,9 @@ void USART_Init(void)
 	
 	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;              /*Enable the peripheral clock USART2 */
 	/*Configure USART2*/
-  
-	//uint16_t uartdiv = SystemCoreClock / 9600;
-	USART2->BRR = 0x341;                               /*Baud rate generation - Tx/Rx baud = fck/(16*USARTDIV)*/
+	/*Baud rate generation - Tx/Rx baud = fck/(16*USARTDIV)*/
+	USART2->BRR = ((( uartdiv / 16 ) << USART_BRR_DIV_Mantissa ) |
+	               (( uartdiv % 16 ) << USART_BRR_DIV_Fraction )); //0x341;
 	USART2->CR1 &= ~USART_CR1_M;                       //8 data bits
 	USART2->CR1 &= ~(USART_CR1_PS | USART_CR1_PCE);    //no parity
 	USART2->CR2 &= ~USART_CR2_STOP;                    // 1 stop bit (STOP[13:12] = 00
@@ -74,7 +78,9 @@ void USART_Init(void)
 	
 	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;        /*Enable the peripheral clock USART3 */
 	/*Configure USART3*/
-  USART3->BRR = USART_BAUDRATE;                           /*Baud rate generation - Tx/Rx baud = fck/(16*USARTDIV)*/
+	/*Baud rate generation - Tx/Rx baud = fck/(16*USARTDIV)*/
+	USART3->BRR = ((( uartdiv / 16 ) << USART_BRR_DIV_Mantissa ) |
+	               (( uartdiv % 16 ) << USART_BRR_DIV_Fraction )); //0x341;
 	USART3->CR1 &= ~USART_CR1_M; //8 data bits
 	USART3->CR1 &= ~(USART_CR1_PS | USART_CR1_PCE); //no parity 
 	USART3->CR2 &= ~USART_CR2_STOP; // 1 stop bit (STOP[13:12] = 00
