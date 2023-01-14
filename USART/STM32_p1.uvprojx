@@ -414,19 +414,19 @@
               <FilePath>.\main.c</FilePath>
             </File>
             <File>
-              <FileName>USARTPool.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\inc\USARTPool.h</FilePath>
-            </File>
-            <File>
-              <FileName>USARTPool.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\USARTPool.c</FilePath>
-            </File>
-            <File>
               <FileName>rbuf.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\inc\rbuf.h</FilePath>
+            </File>
+            <File>
+              <FileName>usart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\inc\usart.h</FilePath>
+            </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\usart.c</FilePath>
             </File>
           </Files>
         </Group>

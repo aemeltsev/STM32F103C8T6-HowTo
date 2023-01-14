@@ -5,7 +5,6 @@
 #include "stm32f10x.h"
 #include <stdbool.h>
 #include <stdint.h>
-
 #include "rbuf.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -18,16 +17,21 @@
 // Library configuration
 // Select USART number
 #define USART_INTRF_IN_USE							(USART_INTRF2)
-#define USART_BAUDRATE                  (9600)
+#define USART_BAUDRATE                  9600
+#define PERPH_CLK                       8000000
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern rbuf rb;
-extern volatile uint8_t newline;
+//extern rbuf rb;
+//extern volatile uint8_t newline;
 
 /* Private function prototypes -----------------------------------------------*/
-extern void USART_Init(void);
-int _write(int handle, char* data, int size);
+void usart_init(void);
+void put_char(uint16_t c);
+uint8_t put_str(unsigned char *s);
+uint16_t get_char(void);
+static uint16_t compute_uart_bd(uint32_t p_clk, uint32_t bd_r);
+static void uart_set_baudrate(USART_TypeDef *USARTx, uint32_t p_clk, uint32_t bd_r);
 
 #if (USART_INTRF_NUMBER == USART_INTRF1)
 extern void USART1_IRQHandler(void);

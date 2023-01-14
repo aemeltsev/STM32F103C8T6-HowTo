@@ -1,27 +1,32 @@
 #ifndef RINGBUF_H
 #define RINGBUF_H
 
-#define RINGBUF_SIZE (128)
+#include <stdint.h>
 
-typedef struct{
-	int len;
-	volatile char* buf;
-	volatile int pos;
-	volatile int ext;
-}rbuf;
+#define RBUF_SIZE (128)
 
-#define rbuf_write(rb, x) \
-  rb.buf[ rb.ext ] = x; \
-  if ( ( rb.ext + 1 ) >= rb.len ) { rb.ext = 0; } \
-	else { rb.ext = rb.ext + 1; }
-	
-static inline char rbuf_read( rbuf* buffer ) 
+typedef struct
 {
-	if( buffer->pos == buffer->ext) { return '\0'; }
-	char read = buffer->buf[ buffer->pos ];
-	buffer->pos = ( buffer->pos < ( buffer->len - 1 ) ) ? ( buffer->pos + 1 ) : 0;
-	
-	return read;
+	volatile uint8_t* buffer;
+	volatile int head;
+	volatile int tail;
+	int len;
+}circ_bbuf_t;
+
+static void rbuf_write(circ_bbuf_t* buffer, uint8_t c)
+{
+	buffer->buffer[buffer->tail] = c;
+	if((buffer->tail + 1) >= buffer->len) { buffer->tail = 0;}
+	else {buffer->tail = buffer->tail + 1;}
+}
+
+static inline uint8_t rbuf_read(circ_bbuf_t* buffer) 
+{
+   if(buffer->head == buffer->tail) {return -1;}
+	 int read = buffer->buffer[ buffer->head ];
+	 buffer->head = ( buffer->head < ( buffer->len - 1 ) ) ? ( buffer->head + 1 ) : 0;
+
+	 return read;
 }
 
 #endif //#define RINGBUF_H
